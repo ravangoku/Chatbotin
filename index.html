@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT Clone</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <h2>ChatGPT Clone</h2>
+        <div id="chat-box"></div>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Type your message..." required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            chatBox.innerHTML += `<div class="user-message"><strong>You:</strong> ${userMessage}</div>`;
+            input.value = "";
+
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = "bot-message";
+            loadingMsg.innerHTML = "<em>Typing...</em>";
+            chatBox.appendChild(loadingMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const res = await fetch("/get", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                const data = await res.json();
+                loadingMsg.remove();
+
+                if (data.response) {
+                    chatBox.innerHTML += `<div class="bot-message"><strong>Bot:</strong> ${data.response}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="bot-message"><strong>Error:</strong> ${data.error}</div>`;
+                }
+            } catch (err) {
+                loadingMsg.remove();
+                chatBox.innerHTML += `<div class="bot-message"><strong>Error:</strong> Failed to connect.</div>`;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    </script>
+</body>
+</html>
